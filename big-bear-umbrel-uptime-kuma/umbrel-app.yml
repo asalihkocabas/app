@@ -1,7 +1,7 @@
 manifestVersion: 1
 id: big-bear-umbrel-uptime-kuma
-name: Uptime Kuma
-category: Networking
+name: Test
+category: Test
 version: "0.0.4"
 tagline: Self-hosted uptime monitoring tool
 icon: https://i.imgur.com/NQhUQbR.png
