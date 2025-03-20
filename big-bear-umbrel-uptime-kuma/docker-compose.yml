@@ -1,14 +1,61 @@
-version: "3.7"
+version: '3'
 
 services:
-  app_proxy:
-    environment:
-      APP_HOST: big-bear-umbrel-uptime-kuma_server_1
-      APP_PORT: 3001
-
-  server:
-    image: louislam/uptime-kuma:1.23.16
+  excalidraw-room:
+    image: ${BUILDREPO}/excalidraw-room:latest
+    expose:
+      - "80"
     restart: on-failure
-    stop_grace_period: 1m
+    healthcheck:
+      disable: true
+
+  excalidraw:
+    image: ${BUILDREPO}/excalidraw:latest
+    depends_on:
+      - excalidraw-room
+    expose:
+      - "80"
+    restart: on-failure
+    stdin_open: true
+    healthcheck:
+      disable: true
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_BACKEND_V1_GET_URL
+      - REACT_APP_BACKEND_V2_GET_URL
+      - REACT_APP_BACKEND_V2_POST_URL
+      - REACT_APP_SOCKET_SERVER_URL
+      - REACT_APP_LIBRARY_URL
+      - REACT_APP_LIBRARY_BACKEND
     volumes:
-      - ${APP_DATA_DIR}/data/uptime-kuma:/app/data
+      - ./excalidraw/:/opt/node_app/app:delegated
+      - ./excalidraw/package.json:/opt/node_app/package.json
+      - ./excalidraw/package-lock.json:/opt/node_app/package-lock.json
+      - excalidraw-notused:/opt/node_app/app/node_modules
+
+  nginx:
+    image: ${BUILDREPO}/nginx:latest
+    restart: on-failure 
+    ports:
+      - '${HTTP_PORT}:80'
+      - '${HTTPS_PORT}:443'
+    volumes:
+      - ./data/nginx:/config:Z
+    environment:
+      - PUB_SRV_NAME
+      - ENABLE_LETSENCRYPT
+      - ENABLE_HTTP_REDIRECT
+      - DISABLE_HTTPS
+      - LETSENCRYPT_DOMAIN
+      - LETSENCRYPT_EMAIL
+      - LETSENCRYPT_USE_STAGING
+      - NGINX_RESOLVER
+      - TZ
+
+volumes:
+  excalidraw-notused:
+
+networks:
+  default:
+    external:
+      name: excalidraw-net
